@@ -142,6 +142,11 @@ export function getComponentName(tag: ComponentConstructor | ComponentFunction) 
 }
 
 export function callAll(mountedQueue: Function[] & {i?: number, done?: boolean}) {
+    if (process.env.NODE_ENV !== 'production') {
+        if (Object.isFrozen(mountedQueue)) {
+            throw new Error('Call the same mountedQueue again becasue it is frozen. Please create a issue for Intact.');
+        }
+    }
     // add a mountedQueue.i property, see mountRef function
     for (let i = mountedQueue.i = 0; i < mountedQueue.length; i++) {
         mountedQueue.i++;

@@ -495,6 +495,73 @@ describe('Intact React', () => {
 
                 render(<App />);
             });
+
+            it('should call mounted callbacks before updated callbacks', async () => {
+                class Container extends Component {
+                    static template = `<div>{this.get('children')}</div>`;
+                }
+                function TaskLibaray() {
+                    return (
+                        <div>
+                            <ChildrenIntactComponent id="1">
+                                <div className="task-card">
+                                    {[1, 2].map((task) => (
+                                        <TaskItem key={task} />
+                                    ))}
+                                </div>
+                            </ChildrenIntactComponent>
+                        </div>
+                    )
+                }
+
+                function TaskItem() {
+                    return (
+                        <div>
+                            <Container>
+                                <div className="taskItem-down">
+                                    <ChildrenIntactComponent id="2"><div>label</div></ChildrenIntactComponent>
+                                    <WebhookEdit />
+                                </div>
+                            </Container>
+                        </div>
+                    )
+                }
+
+                function WebhookEdit() {
+                  	const [value, setValue] = useState(1);
+				  	useEffect(() => {
+						setValue(2);
+				  	});
+                    return (
+                        <div>
+                            <Test />
+                        </div>
+                    )
+				}
+
+                const orders: string[] = [];
+                class Test extends Component {
+                    static template = `<div ref={this.ref}>test</div>`;
+
+                    ref = createRef();
+
+                    mounted() {
+                        console.log('mounted', this.ref.value);
+                        expect(this.ref.value).to.exists;
+                        orders.push('mounted');
+                    }
+
+                    updated() {
+                        console.log('updated', this.ref.value);
+                        expect(this.ref.value).to.exists;
+                        orders.push('updated');
+                    }
+                }
+
+                render(<TaskLibaray />);
+
+                expect(orders).to.eql(['mounted', 'updated', 'mounted', 'updated']);
+            });
         });
 
         describe('vNode', () => {

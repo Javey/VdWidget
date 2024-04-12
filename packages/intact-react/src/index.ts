@@ -100,7 +100,7 @@ export class Component<
 
     public $promises!: FakePromises;
     public $reactProviders!: Map<Provider<any>, any>;
-    private $parentPromises!: FakePromises | null;
+    public $parentPromises!: FakePromises | null;
     private $elementRef!: RefObject<HTMLElement>;
     private $elementAlternateRef!: RefObject<HTMLElement>;
     private $isReact!: boolean;
@@ -155,6 +155,7 @@ export class Component<
             this.$isReact = true;
 
             const promises = this.$promises = new FakePromises();
+            promises.component = this;
             if (process.env.NODE_ENV !== 'production') {
                 promises.name = this.constructor.name;
             }
@@ -326,12 +327,19 @@ export class Component<
             return p;
         };
 
-        const $parentPromises = this.$parentPromises;
-        if ($parentPromises && !$parentPromises.done) {
-            $parentPromises.add(new FakePromise(resolve => {
+        const activeParentPromises = getActiveParentPromise(this as Component);
+        if (activeParentPromises) {
+            activeParentPromises.add(new FakePromise(resolve => {
                 done().then(resolve);
             }));
-        } else {
+        }
+        // const $parentPromises = this.$parentPromises;
+        // if ($parentPromises && !$parentPromises.done) {
+            // $parentPromises.add(new FakePromise(resolve => {
+                // done().then(resolve);
+            // }));
+        // }
+        else {
             done().then(() => {
                 callMountedQueue(this.$mountedQueue);
                 // callAll(this.$mountedQueue);
@@ -370,13 +378,32 @@ function getMountedQueue(parent: Component | null): Function[] {
     queue.priority = [];
     if (parent) {
         const mountedQueue = parent.$mountedQueue! as MountedQueueWithChildren 
-        const parentPromises = parent.$provides![PROMISES] as FakePromises;
-        if (!parentPromises.done) {
-            const children = mountedQueue.children || (mountedQueue.children = []);
-            children.push(queue);
-        }
+        /**
+         * should search all parent promises
+         */
+        let parentPromises: FakePromises;
+        do {
+            parentPromises = parent.$provides![PROMISES] as FakePromises;
+            if (!parentPromises.done) {
+                const children = mountedQueue.children || (mountedQueue.children = []);
+                children.push(queue);
+                break;
+            }
+        } while (parent = parentPromises!.component!.$senior as Component);
     }
     return queue;
+}
+
+function getActiveParentPromise(component: Component) {
+    let parentPromises: FakePromises | null;
+    while (parentPromises = component.$parentPromises) {
+        if (!parentPromises.done) {
+            break;
+        }
+        component = parentPromises.component!;
+    }
+
+    return parentPromises;
 }
 
 function callMountedQueue(mountedQueue: MountedQueueWithChildren) {
@@ -387,9 +414,9 @@ function callMountedQueue(mountedQueue: MountedQueueWithChildren) {
 
     const children = mountedQueue.children;
     if (children) {
-        children.forEach((mountedQueue) => {
-            callMountedQueue(mountedQueue);
-        });
+        for (let i = 0; i < children.length; i++) {
+            callMountedQueue(children[i]);
+        }
     }
 
     callAll(mountedQueue);

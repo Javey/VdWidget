@@ -1,3 +1,4 @@
+import { Component } from './';
 type Callback = () => void;
 type Executor = (resolve: () => void) => void;
 type AllReturn = {
@@ -77,6 +78,7 @@ export class FakePromises {
     public all: AllReturn | null = null; 
     public name?: string;
     public id = id++;
+    public component: Component<any, any, any> | null = null;
 
     public add(promise: FakePromise) {
         /* istanbul ignore next */
