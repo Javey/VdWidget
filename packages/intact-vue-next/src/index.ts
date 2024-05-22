@@ -11,6 +11,7 @@ import {
     callAll,
     isFragment,
     VNode as IntactVNode,
+    findDomsFromVNode,
 } from 'intact';
 import {
     ComponentOptions,
@@ -24,7 +25,7 @@ import {
 } from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
-import {isFunction} from 'intact-shared';
+import {isFunction, proxyFragment, proxyFragmentParent, isFragmentDom} from 'intact-shared';
 import {setScopeId}  from './scoped';
 
 export * from 'intact';
@@ -157,10 +158,7 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
                 const parentComponent = getIntactParent(vueInstance.parent);
                 const isSVG = parentComponent ? parentComponent.$SVG : false;
 
-                const vnode = createVNode(Comment, {key: '1'});
-                const subTree = Ctor.$doubleVNodes ?
-                    createVNode(Fragment, null, [vnode, createVNode(Comment, {key: '2'})]) :
-                    vnode;
+                const subTree = createVNode(Comment);
 
                 if (!vueInstance.isMounted) {
                     // add subTree firstly, because when we mount vue element in intact,
@@ -171,20 +169,19 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
                     mount(vNode, null, parentComponent, isSVG, null, mountedQueue);
 
                     // hack the nodeOps of Vue to create the real dom instead of a comment
-                    const elements = [findDomFromVNode(vNode, true) as IntactDom];
-                    let index = 0;
+                    const elements = findDomsFromVNode(vNode) as IntactDom;
                     if (Ctor.$doubleVNodes) {
-                        elements.push(findDomFromVNode(vNode, false) as IntactDom);
+                        proxyFragment(elements as any);
                     }
                     const nativeCreateComment = document.createComment;
                     document.createComment = () => {
-                        const element = elements[index];
-                        if (++index === elements.length) {
-                            document.createComment = nativeCreateComment;
+                        document.createComment = nativeCreateComment;
+                        if (isFragmentDom(elements)) {
+                            _setScopeId((elements as any).firstElementChild!);
+                        } else {
+                            _setScopeId(elements);
                         }
-                        // scope id
-                        _setScopeId(element);
-                        return element as Comment;
+                        return elements as Comment;
                     };
                 } else {
                     const instance = setupState.instance as Component;
@@ -208,6 +205,7 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
             },
 
             mounted() {
+                proxyFragmentParent(this.$el);
                 callMountedQueue(this.$.uid);
             },
 

@@ -9,12 +9,12 @@ import {
     callAll,
     setInstance,
     validateProps,
+    findDomsFromVNode,
 } from 'intact';
 import Vue, {ComponentOptions, VNode as VueVNode} from 'vue';
 import {normalize, normalizeChildren, isBoolean} from './normalize';
-import {noop} from 'intact-shared';
+import {noop, proxyFragment, proxyFragmentParent} from 'intact-shared';
 import {functionalWrapper} from './functionalWrapper';
-import {addMeta, rewriteDomApi} from './nodeOps';
 
 export * from 'intact';
 export {normalizeChildren as normalize};
@@ -187,15 +187,9 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
                         vNode.children = this;
                         this.$render(null, vNode, null as any, null, $mountedQueue);
 
-                        let element = findDomFromVNode(vNode, true) as any;
+                        const element = findDomsFromVNode(vNode) as any;
                         if (isDoubleVNodes) {
-                            const first = element;
-                            const second = findDomFromVNode(vNode, false) as IntactDom;
-                            const container = document.createDocumentFragment();
-                            container.appendChild(first);
-                            container.appendChild(second);
-                            element = container;
-                            addMeta(element, first, second);
+                            proxyFragment(element);
                         }
 
                         // Because we make all Intact Components be patchable,
@@ -239,7 +233,7 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
             // (this.$options as any)._renderChildren = true;
             (this.$options as any).mounted = [() => {
                 if (isDoubleVNodes) {
-                    rewriteDomApi(this.$el as any);
+                    proxyFragmentParent(this.$el as any);
                 }
                 // if Vue has called the insertedQueue, remove the queue to 
                 // avoid Intact call it again on updating 

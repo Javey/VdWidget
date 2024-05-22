@@ -108,6 +108,37 @@ function findChildVNode(vNode: VNode, startEdge: boolean, type: Types) {
     return children as VNode;
 }
 
+export function findDomsFromVNode(vNode: VNode) {
+    while (vNode) {
+        const type = vNode.type;
+        if (type & Types.HtmlElement) {
+            return vNode.dom;
+        }
+
+        if (type & Types.Fragment) {
+            const children = vNode.children;
+            if (vNode.childrenType === ChildrenTypes.HasVNodeChildren) {
+                vNode = children as VNode;
+                continue;
+            } else {
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < (children as VNode[]).length; i++) {
+                    fragment.appendChild(findDomsFromVNode((children as VNode[])[i])!);
+                } 
+
+                return fragment;
+            }
+        }
+
+        if (type & Types.ComponentClass) {
+            vNode = (vNode.children as ComponentClass).$lastInput!;
+            continue;
+        }
+
+        vNode = vNode.children as VNode;
+    }
+}
+
 export function moveVNodeDom(vNode: VNode, parentDom: Element, anchor: IntactDom | null) {
     do {
         const type = vNode.type;

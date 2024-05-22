@@ -13,6 +13,7 @@ import {
     nextTick,
 } from './helpers';
 import Normalize from './normalize.vue';
+import { Portal } from './portal';
 
 describe('Intact Vue Legacy', () => {
     describe('Render', () => {
@@ -480,5 +481,40 @@ describe('Intact Vue Legacy', () => {
                 expect(vm.$el.outerHTML).to.eql('<div><div>Intact Component</div></div>');
             });
         });
+
+        describe('Portal', () => {
+            class Tooltip extends Component {
+                static $doubleVNodes = true;
+                static template = function(this: Tooltip) {
+                    return [this.get('children'), h(Portal, null, h('span', null, 'content'))]
+                }
+            }
+
+            it('nested $doubleVNodes', async () => {
+                render(`
+                    <div>
+                        <Tooltip v-if="show">
+                            <Tooltip>
+                                <Tooltip>
+                                    <div>test</div>
+                                </Tooltip>
+                            </Tooltip>
+                        </Tooltip>
+                    </div>
+                `, {
+                    Tooltip
+                }, { show: true });
+
+                await nextTick();
+                expect(vm.$el.outerHTML).to.eql('<div><div>test</div><!--portal--><!--portal--><!--portal--></div>');
+
+                vm.show = false;
+                await nextTick();
+                expect(vm.$el.outerHTML).to.eql('<div><!----></div>');
+                const nextSibling = vm.$el.parentElement.nextElementSibling;
+                expect(nextSibling == null || nextSibling.textContent !== 'content').to.be.true;
+            });
+        });
+
     });
 });
