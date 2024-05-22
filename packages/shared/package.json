@@ -1,6 +1,6 @@
 {
   "name": "intact-shared",
-  "version": "3.0.34",
+  "version": "3.0.35",
   "description": "Helpers functions for Intact",
   "main": "index.js",
   "module": "dist/index.esm.js",
