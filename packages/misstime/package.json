@@ -1,6 +1,6 @@
 {
   "name": "misstime",
-  "version": "3.0.35",
+  "version": "3.0.36",
   "description": "A virtual dom library fork from inferno",
   "main": "index.js",
   "module": "dist/index.esm.js",
@@ -17,7 +17,7 @@
   "author": "javey",
   "license": "MIT",
   "dependencies": {
-    "intact-shared": "^3.0.35"
+    "intact-shared": "^3.0.36"
   },
   "sideEffect": false
 }
