@@ -23,7 +23,7 @@ export function proxyFragment(fragment: FragmentWithMeta) {
 
 export function proxyFragmentParent(fragment: FragmentWithMeta) {
     const parentNode = fragment.parentNode as Node & {_intactVueLegacyRewrote?: boolean};
-    if (parentNode._intactVueLegacyRewrote) return;
+    if (!parentNode || parentNode._intactVueLegacyRewrote) return;
 
     const removeChild = parentNode.removeChild;
     parentNode.removeChild = function<T extends Node>(child: T) {
