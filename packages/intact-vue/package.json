@@ -1,6 +1,6 @@
 {
   "name": "intact-vue",
-  "version": "3.0.36",
+  "version": "3.0.37",
   "description": "A compatibility layer for running intact component in vue2.0",
   "main": "index.js",
   "module": "dist/index.esm.js",
@@ -30,8 +30,8 @@
     "vue": "^2.5.0"
   },
   "dependencies": {
-    "intact": "^3.0.36",
-    "intact-shared": "^3.0.36",
+    "intact": "^3.0.37",
+    "intact-shared": "^3.0.37",
     "tslib": "^2.3.1"
   }
 }

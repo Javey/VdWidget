@@ -1,6 +1,6 @@
 {
   "name": "vdt",
-  "version": "3.0.36",
+  "version": "3.0.37",
   "description": "A template engine based on virtual dom library misstime",
   "main": "index.js",
   "module": "dist/index.esm.js",
@@ -16,8 +16,8 @@
     "index.js"
   ],
   "dependencies": {
-    "intact-shared": "^3.0.36",
-    "misstime": "^3.0.36",
+    "intact-shared": "^3.0.37",
+    "misstime": "^3.0.37",
     "tslib": "^2.2.0"
   },
   "sideEffect": false
