@@ -26,8 +26,13 @@ function getDelegatedEventObject<T>(v: T): Record<string, T> {
     };
 }
 
-const attachedEventCounts = /*#__PURE__*/ getDelegatedEventObject<number>(0);
-const attachedEvents = /*#__PURE__*/ getDelegatedEventObject<EventListener | null>(null);
+/**
+ * In QianKun framework, the main App and sub App may use misstime simultaneously
+ * https://github.com/ksc-fe/kpc/issues/1002
+ */
+const w = globalThis as any;
+const attachedEventCounts = w.__misstime_attachedEventCounts__ || (w.__misstime_attachedEventCounts__ = /*#__PURE__*/ getDelegatedEventObject<number>(0));
+const attachedEvents = w.__misstime_attachedEvents__ || (w.__misstime_attachedEvents__ = /*#__PURE__*/ getDelegatedEventObject<EventListener | null>(null));
 
 export const delegatedEvents = /*#__PURE__*/ getDelegatedEventObject<boolean>(true);
 
