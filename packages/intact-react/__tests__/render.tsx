@@ -675,6 +675,14 @@ describe('Intact React', () => {
                 }
                 render(<C><>react</></C>);
             });
+            it('normalize props for undefined', () => {
+                class C extends Component<{}, {}, {prepend: null}> {
+                    static template = `<div>children<b:prepend />{$blocks.prepend ? 'pre' : ''}</div>`;
+                }
+
+                render(<C slotPrepend={undefined}>children</C>);
+                expect(container.innerHTML).to.eql('<div>children</div>');
+            });
         });
 
         describe('Functional Component', () => {

@@ -105,7 +105,7 @@ export function normalizeProps<P>(props: P, events: Record<string, boolean> | un
             // normalizedProps[tmp] = value;
         } else if (key.startsWith('slot')) {
             if (!blocks) blocks = (normalizedProps as any).$blocks = {};
-            blocks[hyphenate(key.substring(4))] = normalizeBlock(value);
+            if (!isNullOrUndefined(value)) blocks[hyphenate(key.substring(4))] = normalizeBlock(value);
         } else if (key === 'forwardRef') {
             (normalizedProps as any).ref = value;
         } else {
