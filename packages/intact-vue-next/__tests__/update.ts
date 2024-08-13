@@ -564,6 +564,44 @@ describe('Intact Vue Next', () => {
             expect(mountedQueueStack.size).to.eql(0);
         });
 
+        it('should track update if we render new component in Intact', async () => {
+            class Test extends Component {
+                static template = `
+                    const {show, data} = this.get();
+                    <div>
+                        <div ev-click={() => this.set('show', !show)}>click</div>
+                        <div v-if={show}>{data.a}</div>
+                    </div>`
+                static defaults() {
+                    return {show: false}
+                }
+            } 
+
+            render(`<Test :data="data" ref="test" />`, {
+                Test
+            }, {
+                data: {
+                    a: 1
+                }
+            });
+
+            vm.$refs.test.set('show', true);
+            await nextTick();
+
+            vm.data.a = 2;
+            await nextTick();
+
+            expect(vm.$el.textContent).to.eql('click2');
+
+            vm.$refs.test.set('show', false);
+            await nextTick();
+            vm.data.a = 3;
+            await nextTick();
+            vm.$refs.test.set('show', true);
+            await nextTick();
+            expect(vm.$el.textContent).to.eql('click3');
+        });
+
         describe('Multiple vNodes Component', () => {
             class Test extends Component {
                 static $doubleVNodes = true;

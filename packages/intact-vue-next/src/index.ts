@@ -22,6 +22,7 @@ import {
     HTMLAttributes,
     VNode,
     Fragment,
+    ReactiveEffect,
 } from 'vue';
 import {normalize, normalizeChildren} from './normalize';
 import {functionalWrapper} from './functionalWrapper';
@@ -225,9 +226,11 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
 
     public vueInstance: ComponentInternalInstance | undefined;
     private $isVueNext: boolean = false;
+    private $effect?: ReactiveEffect;
 
     // for Vue infers types
     public $props!: IntactVueNextProps<P, E>;
+
 
     constructor(
         props: Props<P, Component<P>> | null | undefined,
@@ -269,9 +272,27 @@ export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> 
         mountedQueue: Function[],
         force: boolean
     ): void {
-        const popInstance = pushInstance(this);
-        super.$update(lastVNode, nextVNode, parentDom, anchor, mountedQueue, force);
-        popInstance();
+        const fn = (mountedQueue: Function[]) => {
+            const popInstance = pushInstance(this);
+            super.$update(lastVNode, nextVNode, parentDom, anchor, mountedQueue, force);
+            popInstance();
+            // effect.stop();
+        }
+        if (force) {
+            const effect = this.$effect = new ReactiveEffect(() => {
+                const mountedQueue = this.$mountedQueue = [];
+                fn(mountedQueue);
+                callAll(mountedQueue);
+            });
+            effect.run();
+        } else {
+            fn(mountedQueue);
+        }
+    }
+
+    $unmount(vNode: VNodeComponentClass<this>, nextVNode: VNodeComponentClass<this> | null) {
+        if (this.$effect) this.$effect.stop();
+        super.$unmount(vNode, nextVNode);
     }
 } 
 
