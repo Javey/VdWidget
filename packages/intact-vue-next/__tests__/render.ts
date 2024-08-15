@@ -505,7 +505,13 @@ describe('Intact Vue Next', () => {
             class Tooltip extends Component {
                 static $doubleVNodes = true;
                 static template = function(this: Tooltip) {
-                    return [this.get('children'), h(Portal, null, h('span', null, 'content'))]
+                    return [this.get('children'), h(Portal, { key: 'Tooltip' }, h('span', null, 'content'))];
+                }
+            }
+
+            class Dialog extends Component<{id?: string}> {
+                static template = function(this: Dialog) {
+                    return h(Portal, { key: 'dialog' }, h('div', { className: 'k-dialog', id: this.get('id') }, this.get('children')));
                 }
             }
 
@@ -532,6 +538,29 @@ describe('Intact Vue Next', () => {
                 expect(vm.$el.outerHTML).to.eql('<div><!--v-if--></div>');
                 const nextSibling = vm.$el.parentElement.nextElementSibling;
                 expect(nextSibling == null || nextSibling.textContent !== 'content').to.be.true;
+            });
+
+            it('portal lifecyle order', async () => {
+                class Timepiker extends Component {
+                    static template = `
+                        const { Tooltip } = this;
+                        <Tooltip><div>Timepiker</div></Tooltip>
+                    `;
+
+                    Tooltip = Tooltip;
+
+                    mounted() {
+                        console.log('Timepiker');
+                        expect(document.querySelector('#a')!.innerHTML).to.eql('<div><div>Timepiker</div><!--portal--></div><span>content</span>');
+                    }
+                }
+                render(`
+                    <Dialog id="a">
+                        <div>
+                            <Timepiker />
+                        </div>
+                    </Dialog>
+                `, { Dialog, Timepiker })
             });
         });
     });

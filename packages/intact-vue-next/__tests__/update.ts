@@ -1,4 +1,4 @@
-import {Component, mountedQueueStack} from '../src';
+import {Component, globalMountedQueue} from '../src';
 import {
     dispatchEvent,
     createIntactComponent,
@@ -492,11 +492,11 @@ describe('Intact Vue Next', () => {
             });
 
             await nextTick();
-            expect(mountedQueueStack.size).to.eql(0);
+            expect(globalMountedQueue.uids.size).to.eql(0);
         });
 
         it('should call mountedQueue correctly when update a component to create a new component, then update them again', async () => {
-            const update = sinon.spy(function(children: Component) {
+            const updated = sinon.spy(function(children: Component) {
                 expect(children.$mounted).to.be.true;
             });
             const beforeUpdate = sinon.spy(function(children: Component) {
@@ -507,13 +507,30 @@ describe('Intact Vue Next', () => {
                 static template = `<div>{this.get('children')}</div>`;
 
                 beforeUpdate() {
+                    console.log('beforeUpdate');
                     beforeUpdate(this);
                 }
 
                 updated() {
-                    update(this);
+                    console.log('updated');
+                    updated(this);
+                }
+
+                beforeUnmount() {
+                    console.log('beforeUnmount');
                 }
             }
+
+            // const Test = {
+                // template: `<div><slot /></div>`,
+                // beforeUpdate() {
+                    // console.log('beforeUpdate');
+                // },
+
+                // updated() {
+                    // console.log('updated');
+                // },
+            // }
             render(`<App />`, {
                 App: {
                     data() {
@@ -529,8 +546,8 @@ describe('Intact Vue Next', () => {
                                 modelValue: Number,
                             },
                             template: `
-                                <Test><Bar :modelValue="modelValue" @update:modelValue="v => $emit('update:modelValue', v)" /></Test>
-                                <Test v-if="modelValue === 2 || modelValue === 4">
+                                <Test id="1"><Bar :modelValue="modelValue" @update:modelValue="v => $emit('update:modelValue', v)" /></Test>
+                                <Test id="2" v-if="modelValue === 2 || modelValue === 4">
                                     <Bar :modelValue="modelValue" @update:modelValue="v => $emit('update:modelValue', v)" />
                                 </Test>
                             `,
@@ -543,7 +560,7 @@ describe('Intact Vue Next', () => {
                                     watch: {
                                         modelValue: {
                                             immediate: true,
-                                            handler(v) {
+                                            handler(v, ov) {
                                                 if (v === 2 || v === 4) {
                                                     this.$emit('update:modelValue', 4);
                                                 } else {
@@ -561,7 +578,8 @@ describe('Intact Vue Next', () => {
             });
 
             await nextTick();
-            expect(mountedQueueStack.size).to.eql(0);
+            expect(globalMountedQueue.uids.size).to.eql(0);
+            expect(beforeUpdate.callCount).to.eql(updated.callCount);
         });
 
         it('should track update if we render new component in Intact', async () => {

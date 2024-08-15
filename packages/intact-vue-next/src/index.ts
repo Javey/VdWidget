@@ -65,28 +65,43 @@ type MountedQueueStackItem = {
     queue: Function[],
 };
 
+type GlobalMountedQueue = {
+    value: Function[];
+    uids: Set<Number>;
+} 
+
 let currentInstance: Component | null = null;
+let globalMountedQueue: GlobalMountedQueue = {
+    value: [],
+    uids: new Set(),
+};
 
-const mountedQueueStack: Map<number, Function[]> = new Map();
+/**
+ * In Vue, the call count of beforeUpdate may be not equal to the count of updated
+ * see unit test: should call mountedQueue correctly when update...
+ */
+// const mountedQueueStack: Map<number, Function[]> = new Map();
 const pushMountedQueue = (uid: number) => {
-    callMountedQueue(uid);
-
-    const mountedQueue: Function[] = [];
-    mountedQueueStack.set(uid, mountedQueue);
-
-    return mountedQueue;
+    if (globalMountedQueue.uids.has(uid)) {
+        resetMoutedQueue();
+    }
+    globalMountedQueue.uids.add(uid);
+    return globalMountedQueue.value;
 };
 const callMountedQueue = (uid: number) => {
-    const mountedQueue = mountedQueueStack.get(uid);
-    if (!mountedQueue) return;
-
-    mountedQueueStack.delete(uid);
-
-    callAll(mountedQueue);
+    globalMountedQueue.uids.delete(uid);
+    if (globalMountedQueue.uids.size === 0) {
+        resetMoutedQueue();
+    }
+};
+const resetMoutedQueue = () => {
+   callAll(globalMountedQueue.value);
+   globalMountedQueue.value = [];
+   globalMountedQueue.uids.clear();
 };
 
 // for unit test
-export {mountedQueueStack};
+export {globalMountedQueue};
 
 export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> {
     static $cid = 'IntactVueNext';
