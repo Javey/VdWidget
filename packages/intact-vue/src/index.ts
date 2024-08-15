@@ -19,11 +19,31 @@ import {functionalWrapper} from './functionalWrapper';
 export * from 'intact';
 export {normalizeChildren as normalize};
 
+type GlobalMountedQueue = {
+    value: Function[];
+    i: number;
+} 
+
 let currentInstance: Component | null = null;
-const [pushMountedQueue, popMountedQueue, mountedQueueStack] = createStack<Function[]>();
+let globalMountedQueue: GlobalMountedQueue = {
+    value: [],
+    i: 0,
+};
+const pushMountedQueue = (nouse?: any) => {
+    globalMountedQueue.i++;
+    return globalMountedQueue.value;
+};
+const callMountedQueue = () => {
+    if (--globalMountedQueue.i === 0) {
+        callAll(globalMountedQueue.value);
+        globalMountedQueue.value = [];
+    }
+};
+
+// const [pushMountedQueue, popMountedQueue, mountedQueueStack] = createStack<Function[]>();
 
 // for unit test
-export {mountedQueueStack};
+export {globalMountedQueue};
 
 export class Component<P = {}, E = {}, B = {}> extends IntactComponent<P, E, B> implements Vue {
     // If cid does not exist, Vue will treat it as an async component 
@@ -352,18 +372,6 @@ function createStack<T>() {
     }
 
     return [pushStack, popStack, stack] as const;
-}
-
-function callMountedQueue() {
-    const mountedQueue = popMountedQueue();
-    /* istanbul ignore next */
-    if (process.env.NODE_ENV !== 'production') {
-        if (!mountedQueue) {
-            throw new Error(`"mountedQueue" is undefined, maybe this is a bug of Intact-Vue`);
-        }
-    }
-
-    callAll(mountedQueue!);
 }
 
 const [_pushInstance, _popInstance] = createStack<Component<any, any, any>>();

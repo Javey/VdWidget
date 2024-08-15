@@ -540,7 +540,7 @@ describe('Intact Vue Next', () => {
                 expect(nextSibling == null || nextSibling.textContent !== 'content').to.be.true;
             });
 
-            it('portal lifecyle order', async () => {
+            it('portal lifecyle order', (done) => {
                 class Timepiker extends Component {
                     static template = `
                         const { Tooltip } = this;
@@ -552,6 +552,7 @@ describe('Intact Vue Next', () => {
                     mounted() {
                         console.log('Timepiker');
                         expect(document.querySelector('#a')!.innerHTML).to.eql('<div><div>Timepiker</div><!--portal--></div><span>content</span>');
+                        done();
                     }
                 }
                 render(`

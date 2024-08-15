@@ -1,4 +1,4 @@
-import {Component, provide, inject, mountedQueueStack} from '../src';
+import {Component, provide, inject, globalMountedQueue} from '../src';
 import {
     dispatchEvent,
     createIntactComponent,
@@ -39,19 +39,19 @@ describe('Intact Vue Legacy', () => {
 
                 expect(beforeMount.callCount).be.eq(1);
                 expect(mounted.callCount).be.eql(1);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 vm.a = 2;
                 await nextTick();
                 expect(beforeUpdate.callCount).be.eq(1);
                 expect(updated.callCount).be.eql(1);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 vm.show = false;
                 await nextTick();
                 expect(beforeUnmount.callCount).be.eq(1);
                 expect(unmounted.callCount).be.eql(1);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
             });
 
             it('lifecycle of vue in intact', async () => {
@@ -72,19 +72,19 @@ describe('Intact Vue Legacy', () => {
                 }, {show: true, a: 1});
 
                 expect(vm.$refs.a.$vnode.data.queue).to.be.null;
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 vm.a = 2;
                 await nextTick();
                 expect(created.callCount).be.eql(1);
                 expect(mounted.callCount).be.eql(1);
                 expect(updated.callCount).be.eql(1);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 vm.show = false;
                 await nextTick();
                 expect(destroyed.callCount).be.eql(1);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
             });
 
             it('lifecycle of mounted nested intact component', async () => {
@@ -120,7 +120,7 @@ describe('Intact Vue Legacy', () => {
                 expect(mounted2.callCount).be.eql(1);
                 expect(mounted2.calledBefore(mounted1)).be.true;
                 expect(mounted3.calledBefore(mounted2)).be.true;
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
             });
 
             it('handle mountedQueue', async () => {
@@ -143,12 +143,12 @@ describe('Intact Vue Legacy', () => {
                     }
                 }, {a: 1});
 
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
                 
                 vm.a = 2;
                 await nextTick();
                 expect(vm.$el.outerHTML).to.eql('<div><div>test</div>2</div>');
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 expect(callback.callCount).to.eql(2);
             });
@@ -209,13 +209,13 @@ describe('Intact Vue Legacy', () => {
 
                 await Test(true);
                 expect(mounted.callCount).to.eql(2);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
                 // Test(false);
                 // (window as any).vm = vm;
                 await Promise.all([Test(false), vm.$refs.a.show()]);
                 expect(updated.callCount).to.eql(1);
                 expect(mounted.callCount).to.eql(4);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
             });
 
             it('should call mount method when we update data in vue mounted lifecycle method', async () => {
@@ -253,7 +253,7 @@ describe('Intact Vue Legacy', () => {
                     IntactComponent, Test,
                 }, {show: false});
 
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
 
                 // (window as any).vm = vm;
                 vm.show = true;
@@ -261,7 +261,7 @@ describe('Intact Vue Legacy', () => {
                 expect(mounted.callCount).to.eql(1);
                 expect(Object.isFrozen(vm.$refs.a.$mountedQueue)).to.be.true;
                 expect(Object.isFrozen(vm.$refs.c.$refs.b.$mountedQueue)).to.be.true;
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
                 console.log(vm.$refs.c.$senior);
             });
 
@@ -276,7 +276,7 @@ describe('Intact Vue Legacy', () => {
                 render('<div><C /><C /></div>', {C: Test});
 
                 expect(mounted.callCount).to.eql(2);
-                expect(mountedQueueStack.length).to.eql(0);
+                expect(globalMountedQueue.value.length).to.eql(0);
             });
 
             it('update vue component nested intact component', async () => {
