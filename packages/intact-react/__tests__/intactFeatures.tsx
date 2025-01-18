@@ -14,6 +14,7 @@ import {
 } from './helpers';
 import {Component, createVNode as h, findDomFromVNode, createRef, VNode, provide, inject, VNodeComponentClass, IntactDom} from '../src';
 import {act} from 'react-dom/test-utils';
+import { Dialog } from './portal';
 
 describe('Intact React', () => {
     describe('Intact Features', () => {
@@ -561,6 +562,68 @@ describe('Intact React', () => {
                 render(<TaskLibaray />);
 
                 expect(orders).to.eql(['mounted', 'updated', 'mounted', 'updated']);
+            });
+
+            it('should call mounted in complex component tree', () => {
+                function App() {
+                    const [value, setValue] = useState<number>();
+                    return <div>
+                        <ChildrenIntactComponent id="Card">
+                            <ReactForm onChange={setValue} />
+                        </ChildrenIntactComponent>
+                    </div>
+                }
+
+                function ReactForm(props: { onChange: (a: number) => void }) {
+                    return <AnotherReactForm onChange={props.onChange} />
+                }
+
+                function AnotherReactForm(props: { onChange: (a: number) => void }) {
+                    return <ChildrenIntactComponent id="Form">
+                        <ReactFormItem onChange={props.onChange} />
+                    </ChildrenIntactComponent>
+                }
+
+                function ReactFormItem(props: { onChange: (a: number) => void }) {
+                    const [value, setValue] = useState<number>();
+                    return <div>
+                        <ChildrenIntactComponent id="FormItem">
+                            <ReactTooltip />
+                            <ReactSelect onChange={(value) => {
+                                props.onChange(value);
+                                setValue(value);
+                            }} />
+                        </ChildrenIntactComponent>
+                    </div>
+                }
+
+                function ReactTooltip() {
+                    return <div><ChildrenIntactComponent><span>span</span></ChildrenIntactComponent></div>
+                }
+
+                function ReactSelect(props: { onChange: (a: number) => void }) {
+                    return <IntactSelect onChange={props.onChange} />
+                }
+
+                class IntactSelect extends Component<{}, { 'change': [number] }> {
+                    static template = `<div ev-click={this.select.bind(this)}>click</div>`;
+
+                    private num = 1;
+
+                    select() {
+                        this.trigger('change', this.num++);
+                    }
+
+                    mounted() {
+                        console.log('mounted');
+                    }
+
+                    updated() {
+                        console.log('updated');
+                    }
+                }
+
+                render(<App />);
             });
         });
 

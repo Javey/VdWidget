@@ -149,3 +149,15 @@ export class Portal<T extends PortalProps = PortalProps> extends Component<T> {
         }
     }
 }
+
+export class Dialog extends Component<{show?: boolean}> {
+    static template = `const Portal = this.Portal;
+        <Portal><div class="k-dialog">{this.get('show') ? this.get('children') : null}</div></Portal>
+    `
+    static defaults() {
+        return { show: true };
+    }
+
+    private Portal = Portal;
+}
+
