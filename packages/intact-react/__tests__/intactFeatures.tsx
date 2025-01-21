@@ -507,7 +507,7 @@ describe('Intact React', () => {
                             <ChildrenIntactComponent id="1">
                                 <div className="task-card">
                                     {[1, 2].map((task) => (
-                                        <TaskItem key={task} />
+                                        <TaskItem key={task} task={task} />
                                     ))}
                                 </div>
                             </ChildrenIntactComponent>
@@ -515,10 +515,10 @@ describe('Intact React', () => {
                     )
                 }
 
-                function TaskItem() {
+                function TaskItem(props: { task: number }) {
                     return (
                         <div>
-                            <Container>
+                            <Container key={props.task}>
                                 <div className="taskItem-down">
                                     <ChildrenIntactComponent id="2"><div>label</div></ChildrenIntactComponent>
                                     <WebhookEdit />
@@ -616,6 +616,10 @@ describe('Intact React', () => {
 
                     mounted() {
                         console.log('mounted');
+                    }
+
+                    beforeUpdate() {
+                        console.log('beforeUpdate');
                     }
 
                     updated() {

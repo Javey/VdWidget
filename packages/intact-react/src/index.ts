@@ -71,6 +71,13 @@ type NormalizedHTMLAttibutes = {
             HTMLAttributes<any>[Key]
 }
 
+type MountedQueueWithChildren = Function[] & {
+    children?: MountedQueueWithChildren[],
+    priority?: Function[],
+    pending?: MountedQueueWithChildren[],
+    done?: boolean,
+};
+
 const PROMISES = '_$IntactReactPromises';
 const EMPTY_ARRAY: any[] = [];
 if (process.env.NODE_ENV !== 'production') {
@@ -298,7 +305,7 @@ export class Component<
         if (promises.done) {
             promises.reset();
 
-            const mountedQueue = this.$mountedQueue = getMountedQueue(this.$senior as Component);
+            const mountedQueue = this.$mountedQueue = getMountedQueue(this.$senior as Component, this as Component);
             this.$update(lastVNode, vNode, this.$parentElement, null, mountedQueue, false); 
 
             this.$done(() => {
@@ -372,12 +379,14 @@ export class Component<
 
 Component.prototype.isReactComponent = true;
 
-type MountedQueueWithChildren = Function[] & { children?: MountedQueueWithChildren[], priority?: Function[] };
-function getMountedQueue(parent: Component | null): Function[] {
+function getMountedQueue(parent: Component | null, instance?: Component): Function[] {
     const queue: MountedQueueWithChildren = [];
     queue.priority = [];
+    queue.pending = [];
     if (parent) {
         const mountedQueue = parent.$mountedQueue! as MountedQueueWithChildren 
+        const oldMountedQueue = instance?.$mountedQueue as MountedQueueWithChildren;
+
         /**
          * should search all parent promises
          */
@@ -385,8 +394,16 @@ function getMountedQueue(parent: Component | null): Function[] {
         do {
             parentPromises = parent.$provides![PROMISES] as FakePromises;
             if (!parentPromises.done) {
-                const children = mountedQueue.children || (mountedQueue.children = []);
-                children.push(queue);
+                if (!mountedQueue.done) {
+                    const children = mountedQueue.children || (mountedQueue.children = []);
+                    if (oldMountedQueue?.pending?.length) {
+                        children.push(...oldMountedQueue.pending);
+                        oldMountedQueue.pending.length = 0;
+                    }
+                    children.push(queue);
+                } else {
+                    mountedQueue.pending!.push(queue);
+                }
                 break;
             }
         } while (parent = parentPromises!.component!.$senior as Component);

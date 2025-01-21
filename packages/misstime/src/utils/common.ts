@@ -183,8 +183,8 @@ export function callAll(mountedQueue: Function[] & {i?: number, done?: boolean})
         mountedQueue.i++;
         mountedQueue[i]();
     }
+    mountedQueue.done = true;
     if (process.env.NODE_ENV !== 'production') {
-        mountedQueue.done = true;
         Object.freeze(mountedQueue);
     }
 }
