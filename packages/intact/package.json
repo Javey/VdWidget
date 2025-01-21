@@ -1,7 +1,7 @@
 {
   "name": "intact",
   "description": "A very lightweight data-binding library to create rich web application",
-  "version": "3.0.39",
+  "version": "3.0.40",
   "main": "index.js",
   "module": "dist/index.runtime.esm.js",
   "typings": "dist/index.d.ts",
@@ -15,11 +15,11 @@
     "directory": "packages/intact"
   },
   "dependencies": {
-    "intact-shared": "^3.0.39",
-    "misstime": "^3.0.39",
+    "intact-shared": "^3.0.40",
+    "misstime": "^3.0.40",
     "tslib": "^2.2.0",
-    "vdt": "^3.0.39",
-    "vdt-compiler": "^3.0.39"
+    "vdt": "^3.0.40",
+    "vdt-compiler": "^3.0.40"
   },
   "sideEffect": false
 }
