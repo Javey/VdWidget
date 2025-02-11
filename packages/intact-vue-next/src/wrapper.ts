@@ -20,6 +20,7 @@ import {
     cloneVNode,
 } from 'vue';
 import type {Component} from './';
+import { noop } from 'intact-shared';
 
 type PatchFn = (
     n1: VueVNode | null, // null means this is a mount
@@ -42,16 +43,18 @@ type UnmountFn = (
 ) => void;
 
 // we must use this hack method to get patch function
-let internals: {p: PatchFn, um: UnmountFn};
-createApp({
-    render() {
-        return h(KeepAlive, null, h(function() {
-            const instance = getCurrentInstance() as any;
-            internals = instance.parent.ctx.renderer;
-        }));
-    }
-}).mount(document.createElement('div'));
-const {p: patch, um: unmount} = internals!;
+let internals: {p: PatchFn, um: UnmountFn} = { p: noop, um: noop };
+if (typeof window !== 'undefined') {
+    createApp({
+        render() {
+            return h(KeepAlive, null, h(function() {
+                const instance = getCurrentInstance() as any;
+                internals = instance.parent.ctx.renderer;
+            }));
+        }
+    }).mount(document.createElement('div'));
+}
+const {p: patch, um: unmount} = internals;
 
 export interface WrapperProps {
     vnode: VueVNode
